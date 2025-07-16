@@ -44,13 +44,7 @@ class ContentGenerator:
         except Exception as e:
             print(f"警告: モデルの初期化に失敗しました ({e})")
             print("ローカルテンプレートベースの生成を使用します")
-            self.config.model_type = "template"
-            # デバッグ情報の追加
-            if self.config.model_type == "openrouter":
-                api_key = os.getenv("OPENROUTER_API_KEY")
-                print(f"OpenRouter APIキーの設定状況: {'設定済み' if api_key else '未設定'}")
-                if api_key:
-                    print(f"APIキーの形式: {api_key[:10]}...{api_key[-4:] if len(api_key) > 14 else api_key}"))
+            self.config.model_type = "template")
     
     def _init_claude(self):
         """Claude APIの初期化"""
