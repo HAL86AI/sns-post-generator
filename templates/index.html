@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#667eea">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="SNS投稿生成">
+    <title>マルチプラットフォーム投稿生成ツール</title>
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='icons/icon-192x192.png') }}">
+    <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <div class="logo">
+                    <i class="fas fa-magic"></i>
+                    <h1>SNS投稿生成ツール</h1>
+                </div>
+                <div class="header-subtitle">
+                    あなたの文体でnote・LinkedIn・Twitterの投稿を自動生成
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="content-grid">
+                <!-- Input Section -->
+                <section class="input-section">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2><i class="fas fa-edit"></i> 入力情報</h2>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="theme">
+                                <i class="fas fa-lightbulb"></i>
+                                投稿テーマ
+                            </label>
+                            <textarea 
+                                id="theme" 
+                                placeholder="投稿したいテーマや内容を入力してください&#10;例：営業の自動化について書きたい"
+                                rows="3"
+                            ></textarea>
+                            <div class="char-count" id="theme-count">0文字</div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="style-guide">
+                                <i class="fas fa-pen-fancy"></i>
+                                文体ガイド
+                                <span class="upload-btn" onclick="uploadFile('style-guide')">
+                                    <i class="fas fa-upload"></i> ファイルから読み込み
+                                </span>
+                            </label>
+                            <textarea 
+                                id="style-guide" 
+                                placeholder="あなたの文体や投稿スタイルを記述してください&#10;例：フレンドリーで親しみやすいトーン、実体験を交える..."
+                                rows="4"
+                            ></textarea>
+                            <div class="char-count" id="style-guide-count">0文字</div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="sns-workflow">
+                                <i class="fas fa-share-alt"></i>
+                                SNS投稿方針
+                                <span class="upload-btn" onclick="uploadFile('sns-workflow')">
+                                    <i class="fas fa-upload"></i> ファイルから読み込み
+                                </span>
+                            </label>
+                            <textarea 
+                                id="sns-workflow" 
+                                placeholder="各プラットフォームでの投稿方針を記述してください&#10;例：noteは深い内容、LinkedInはビジネス関連、Twitterは気づきの共有..."
+                                rows="4"
+                            ></textarea>
+                            <div class="char-count" id="sns-workflow-count">0文字</div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>
+                                <i class="fas fa-file-alt"></i>
+                                サンプル記事（任意）
+                            </label>
+                            <div class="sample-articles-container">
+                                <div class="upload-area" onclick="uploadFile('sample-articles')">
+                                    <i class="fas fa-cloud-upload-alt"></i>
+                                    <p>記事ファイルをアップロード<br><small>(.md, .txt)</small></p>
+                                </div>
+                                <div id="sample-articles-list" class="sample-articles-list"></div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="model-type">
+                                <i class="fas fa-cog"></i>
+                                生成モデル
+                            </label>
+                            <select id="model-type">
+                                <option value="template">テンプレート（推奨）</option>
+                                <option value="claude">Claude API</option>
+                                <option value="openai">OpenAI API</option>
+                                <option value="local">ローカルモデル</option>
+                            </select>
+                        </div>
+
+                        <button class="generate-btn" onclick="generateContent()">
+                            <i class="fas fa-magic"></i>
+                            投稿文を生成する
+                        </button>
+                    </div>
+                </section>
+
+                <!-- Output Section -->
+                <section class="output-section">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2><i class="fas fa-bullhorn"></i> 生成結果</h2>
+                            <div class="status-indicator" id="status-indicator">
+                                <span class="status-text">待機中</span>
+                            </div>
+                        </div>
+
+                        <div class="output-tabs">
+                            <button class="tab-btn active" onclick="switchTab('note')">
+                                <i class="fas fa-file-alt"></i> note
+                            </button>
+                            <button class="tab-btn" onclick="switchTab('linkedin')">
+                                <i class="fab fa-linkedin"></i> LinkedIn
+                            </button>
+                            <button class="tab-btn" onclick="switchTab('twitter')">
+                                <i class="fab fa-twitter"></i> Twitter
+                            </button>
+                        </div>
+
+                        <div class="output-content">
+                            <!-- Note Output -->
+                            <div id="note-output" class="output-panel active">
+                                <div class="output-header">
+                                    <div class="platform-info">
+                                        <h3><i class="fas fa-file-alt"></i> note記事案</h3>
+                                        <span class="target-length">目標: 800-1500文字</span>
+                                    </div>
+                                    <button class="download-btn" onclick="downloadContent('note')" disabled>
+                                        <i class="fas fa-download"></i> ダウンロード
+                                    </button>
+                                </div>
+                                <div class="output-text" id="note-text">
+                                    <div class="placeholder">
+                                        <i class="fas fa-file-alt"></i>
+                                        <p>ここにnote記事が表示されます</p>
+                                    </div>
+                                </div>
+                                <div class="output-stats" id="note-stats"></div>
+                            </div>
+
+                            <!-- LinkedIn Output -->
+                            <div id="linkedin-output" class="output-panel">
+                                <div class="output-header">
+                                    <div class="platform-info">
+                                        <h3><i class="fab fa-linkedin"></i> LinkedIn投稿案</h3>
+                                        <span class="target-length">目標: 300-600文字</span>
+                                    </div>
+                                    <button class="download-btn" onclick="downloadContent('linkedin')" disabled>
+                                        <i class="fas fa-download"></i> ダウンロード
+                                    </button>
+                                </div>
+                                <div class="output-text" id="linkedin-text">
+                                    <div class="placeholder">
+                                        <i class="fab fa-linkedin"></i>
+                                        <p>ここにLinkedIn投稿が表示されます</p>
+                                    </div>
+                                </div>
+                                <div class="output-stats" id="linkedin-stats"></div>
+                            </div>
+
+                            <!-- Twitter Output -->
+                            <div id="twitter-output" class="output-panel">
+                                <div class="output-header">
+                                    <div class="platform-info">
+                                        <h3><i class="fab fa-twitter"></i> Twitter投稿案</h3>
+                                        <span class="target-length">目標: 140文字×3連投</span>
+                                    </div>
+                                    <button class="download-btn" onclick="downloadContent('twitter')" disabled>
+                                        <i class="fas fa-download"></i> ダウンロード
+                                    </button>
+                                </div>
+                                <div class="output-text" id="twitter-text">
+                                    <div class="placeholder">
+                                        <i class="fab fa-twitter"></i>
+                                        <p>ここにTwitter投稿が表示されます</p>
+                                    </div>
+                                </div>
+                                <div class="output-stats" id="twitter-stats"></div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </main>
+
+        <!-- Loading Overlay -->
+        <div id="loading-overlay" class="loading-overlay">
+            <div class="loading-content">
+                <div class="loading-spinner"></div>
+                <h3>コンテンツを生成中...</h3>
+                <p>少々お待ちください</p>
+            </div>
+        </div>
+
+        <!-- File Upload Modal -->
+        <div id="upload-modal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>ファイルアップロード</h3>
+                    <button class="modal-close" onclick="closeModal()">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <input type="file" id="file-input" accept=".txt,.md" multiple style="display: none;">
+                    <div class="upload-drop-zone" onclick="document.getElementById('file-input').click()">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <p>ファイルを選択またはドラッグ&ドロップ</p>
+                        <small>対応形式: .txt, .md</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
