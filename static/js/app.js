@@ -57,19 +57,34 @@ class PostGenerator {
             
             if (textarea && counter) {
                 textarea.addEventListener('input', () => {
-                    const count = textarea.value.length;
-                    counter.textContent = `${count}文字`;
-                    
-                    // Visual feedback for length
-                    if (count > 1000) {
-                        counter.style.color = '#e74c3c';
-                    } else if (count > 500) {
-                        counter.style.color = '#f39c12';
-                    } else {
-                        counter.style.color = '#666';
-                    }
+                    this.updateCharCounter(id);
                 });
             }
+        });
+    }
+
+    updateCharCounter(id) {
+        const textarea = document.getElementById(id);
+        const counter = document.getElementById(id + '-count');
+        
+        if (textarea && counter) {
+            const count = textarea.value.length;
+            counter.textContent = `${count}文字`;
+            
+            // Visual feedback for length
+            if (count > 1000) {
+                counter.style.color = '#e74c3c';
+            } else if (count > 500) {
+                counter.style.color = '#f39c12';
+            } else {
+                counter.style.color = '#666';
+            }
+        }
+    }
+
+    updateCharCounters() {
+        ['theme', 'style-guide', 'sns-workflow'].forEach(id => {
+            this.updateCharCounter(id);
         });
     }
 
@@ -148,10 +163,10 @@ class PostGenerator {
         document.getElementById('sns-workflow').value = defaultWorkflow;
 
         // Trigger char counters
-        this.setupCharCounters();
-        document.getElementById('theme').dispatchEvent(new Event('input'));
-        document.getElementById('style-guide').dispatchEvent(new Event('input'));
-        document.getElementById('sns-workflow').dispatchEvent(new Event('input'));
+        this.updateCharCounters();
+        
+        // Set default model type
+        document.getElementById('model-type').value = 'openrouter';
     }
 
     switchTab(platform) {
