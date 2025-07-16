@@ -94,7 +94,7 @@ class ContentGenerator:
             self.openrouter_config = {
                 "api_key": api_key,
                 "base_url": "https://openrouter.ai/api/v1/chat/completions",
-                "model": "deepseek/deepseek-chat-v3-0324:free",  # 無料モデル
+                "model": "google/gemini-2.0-flash-exp:free",  # 無料モデル
                 "headers": {
                     "Authorization": f"Bearer {api_key}",
                     "Content-Type": "application/json",
