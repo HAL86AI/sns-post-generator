@@ -253,8 +253,3 @@ def not_found_error(error):
 def internal_error(error):
     return jsonify({'success': False, 'error': 'サーバー内部エラーが発生しました'}), 500
 
-if __name__ == '__main__':
-    # 本番環境対応（Railway用）
-    port = int(os.environ.get("PORT", 5000))
-    debug_mode = os.environ.get("FLASK_ENV") != "production"
-    app.run(debug=debug_mode, host='0.0.0.0', port=port)
