@@ -23,7 +23,7 @@ class GenerationConfig:
 class ContentGenerator:
     """文体情報に基づいてプラットフォーム別のコンテンツを生成"""
     
-    def __init__(self, model_type: str = "claude"):
+    def __init__(self, model_type: str = "openrouter"):
         self.config = GenerationConfig(model_type=model_type)
         self.model_client = None
         self._initialize_model()
@@ -31,7 +31,9 @@ class ContentGenerator:
     def _initialize_model(self):
         """使用するモデルの初期化"""
         try:
-            if self.config.model_type == "claude":
+            if self.config.model_type == "openrouter":
+                self._init_openrouter()
+            elif self.config.model_type == "claude":
                 self._init_claude()
             elif self.config.model_type == "openai":
                 self._init_openai()
@@ -77,11 +79,38 @@ class ContentGenerator:
         except ImportError:
             raise ImportError("transformersライブラリがインストールされていません: pip install transformers torch")
     
+    def _init_openrouter(self):
+        """OpenRouter APIの初期化"""
+        try:
+            import requests
+            api_key = os.getenv("OPENROUTER_API_KEY")
+            if not api_key:
+                raise ValueError("OPENROUTER_API_KEY環境変数が設定されていません")
+            
+            # OpenRouter APIの設定
+            self.openrouter_config = {
+                "api_key": api_key,
+                "base_url": "https://openrouter.ai/api/v1/chat/completions",
+                "model": "anthropic/claude-3.5-sonnet-20241022",  # デフォルトモデル
+                "headers": {
+                    "Authorization": f"Bearer {api_key}",
+                    "Content-Type": "application/json",
+                    "HTTP-Referer": "https://sns-post-generator.onrender.com/",
+                    "X-Title": "SNS Post Generator"
+                }
+            }
+            self.model_client = requests.Session()
+            self.model_client.headers.update(self.openrouter_config["headers"])
+        except ImportError:
+            raise ImportError("requestsライブラリがインストールされていません: pip install requests")
+    
     def _call_api_with_retry(self, prompt: str) -> str:
         """APIを呼び出し、失敗時はリトライ"""
         for attempt in range(self.config.retry_attempts):
             try:
-                if self.config.model_type == "claude":
+                if self.config.model_type == "openrouter":
+                    return self._call_openrouter_api(prompt)
+                elif self.config.model_type == "claude":
                     return self._call_claude_api(prompt)
                 elif self.config.model_type == "openai":
                     return self._call_openai_api(prompt)
@@ -140,6 +169,40 @@ class ContentGenerator:
         
         generated_text = self.tokenizer.decode(outputs[0], skip_special_tokens=True)
         return generated_text[len(prompt):].strip()
+    
+    def _call_openrouter_api(self, prompt: str) -> str:
+        """OpenRouter APIを呼び出し"""
+        import json
+        
+        payload = {
+            "model": self.openrouter_config["model"],
+            "messages": [
+                {
+                    "role": "user",
+                    "content": prompt
+                }
+            ],
+            "max_tokens": self.config.max_tokens,
+            "temperature": self.config.temperature,
+            "top_p": 1,
+            "frequency_penalty": 0,
+            "presence_penalty": 0
+        }
+        
+        response = self.model_client.post(
+            self.openrouter_config["base_url"],
+            json=payload
+        )
+        
+        if response.status_code != 200:
+            raise Exception(f"OpenRouter API error: {response.status_code} - {response.text}")
+        
+        result = response.json()
+        
+        if "choices" not in result or len(result["choices"]) == 0:
+            raise Exception("OpenRouter API returned no choices")
+        
+        return result["choices"][0]["message"]["content"].strip()
     
     def _generate_with_template(self, prompt: str):
         """テンプレートベースでコンテンツを生成（フォールバック）"""

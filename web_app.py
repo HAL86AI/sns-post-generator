@@ -62,7 +62,7 @@ def generate_content():
         style_guide_text = data['style_guide']
         sns_workflow_text = data['sns_workflow']
         sample_articles = data.get('sample_articles', [])
-        model_type = data.get('model_type', 'template')
+        model_type = data.get('model_type', 'openrouter')
         
         # 文体分析の実行
         analyzer = StyleAnalyzer()

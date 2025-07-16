@@ -61,9 +61,9 @@ def parse_arguments() -> argparse.Namespace:
     
     parser.add_argument(
         "--model",
-        default="claude",
-        choices=["claude", "openai", "local"],
-        help="使用する生成モデル（デフォルト: claude）"
+        default="openrouter",
+        choices=["openrouter", "claude", "openai", "local"],
+        help="使用する生成モデル（デフォルト: openrouter）"
     )
     
     parser.add_argument(
