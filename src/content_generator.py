@@ -84,6 +84,9 @@ class ContentGenerator:
         try:
             import requests
             api_key = os.getenv("OPENROUTER_API_KEY")
+            print(f"OpenRouter APIキー確認: {'設定済み' if api_key else '未設定'}")
+            if api_key:
+                print(f"APIキー形式: {api_key[:10]}...")
             if not api_key:
                 raise ValueError("OPENROUTER_API_KEY環境変数が設定されていません")
             
