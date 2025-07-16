@@ -30,3 +30,5 @@ flake8>=5.0.0
 # Documentation
 sphinx>=5.0.0
 sphinx-rtd-theme>=1.0.0
+
+gunicorn>=20.1.0
