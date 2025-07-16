@@ -94,7 +94,7 @@ class ContentGenerator:
             self.openrouter_config = {
                 "api_key": api_key,
                 "base_url": "https://openrouter.ai/api/v1/chat/completions",
-                "model": "meta-llama/llama-3.1-8b-instruct:free",  # 無料モデル
+                "model": "deepseek/deepseek-chat-v3-0324:free",  # 無料モデル
                 "headers": {
                     "Authorization": f"Bearer {api_key}",
                     "Content-Type": "application/json",
@@ -192,20 +192,28 @@ class ContentGenerator:
             "presence_penalty": 0
         }
         
+        print(f"OpenRouter API呼び出し: {self.openrouter_config['model']}")
+        
         response = self.model_client.post(
             self.openrouter_config["base_url"],
             json=payload
         )
         
+        print(f"OpenRouter API応答: {response.status_code}")
+        
         if response.status_code != 200:
+            print(f"OpenRouter API エラー詳細: {response.text}")
             raise Exception(f"OpenRouter API error: {response.status_code} - {response.text}")
         
         result = response.json()
         
         if "choices" not in result or len(result["choices"]) == 0:
+            print(f"OpenRouter API 応答内容: {result}")
             raise Exception("OpenRouter API returned no choices")
         
-        return result["choices"][0]["message"]["content"].strip()
+        generated_text = result["choices"][0]["message"]["content"].strip()
+        print(f"OpenRouter API 生成成功: {len(generated_text)}文字")
+        return generated_text
     
     def _generate_with_template(self, prompt: str):
         """テンプレートベースでコンテンツを生成（フォールバック）"""
