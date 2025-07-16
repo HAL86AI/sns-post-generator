@@ -94,7 +94,7 @@ class ContentGenerator:
             self.openrouter_config = {
                 "api_key": api_key,
                 "base_url": "https://openrouter.ai/api/v1/chat/completions",
-                "model": "google/gemini-2.0-flash-exp:free",  # 無料モデル
+                "model": "deepseek/deepseek-chat-v3-0324:free",  # 無料モデル
                 "headers": {
                     "Authorization": f"Bearer {api_key}",
                     "Content-Type": "application/json",
@@ -192,7 +192,7 @@ class ContentGenerator:
             "presence_penalty": 0
         }
         
-        print(f"OpenRouter API呼び出し: {self.openrouter_config['model']} (Gemini 2.0 Flash Exp)")
+        print(f"OpenRouter API呼び出し: {self.openrouter_config['model']} (DeepSeek V3)")
         
         response = self.model_client.post(
             self.openrouter_config["base_url"],
