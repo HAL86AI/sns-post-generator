@@ -192,7 +192,7 @@ class ContentGenerator:
             "presence_penalty": 0
         }
         
-        print(f"OpenRouter API呼び出し: {self.openrouter_config['model']}")
+        print(f"OpenRouter API呼び出し: {self.openrouter_config['model']} (Gemini 2.0 Flash Exp)")
         
         response = self.model_client.post(
             self.openrouter_config["base_url"],
