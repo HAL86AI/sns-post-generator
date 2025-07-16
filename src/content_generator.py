@@ -91,7 +91,7 @@ class ContentGenerator:
             self.openrouter_config = {
                 "api_key": api_key,
                 "base_url": "https://openrouter.ai/api/v1/chat/completions",
-                "model": "anthropic/claude-3.5-sonnet-20241022",  # デフォルトモデル
+                "model": "meta-llama/llama-3.1-8b-instruct:free",  # 無料モデル
                 "headers": {
                     "Authorization": f"Bearer {api_key}",
                     "Content-Type": "application/json",
