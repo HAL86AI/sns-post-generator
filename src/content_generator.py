@@ -43,7 +43,7 @@ class ContentGenerator:
                 raise ValueError(f"サポートされていないモデルタイプ: {self.config.model_type}")
         except Exception as e:
             print(f"警告: モデルの初期化に失敗しました ({e})")
-            print("ローカルテンプレートベースの生成を使用します")
+            print("ローカルテンプレートベースの生成を使用します。")
             self.config.model_type = "template"
     
     def _init_claude(self):
