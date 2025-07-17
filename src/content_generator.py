@@ -15,8 +15,8 @@ class GenerationConfig:
     """コンテンツ生成の設定"""
     model_type: str
     temperature: float = 0.7
-    max_tokens: int = 2000
-    retry_attempts: int = 3
+    max_tokens: int = 1000  # トークン数を削減
+    retry_attempts: int = 2  # リトライ回数を削減
     retry_delay: float = 1.0
 
 
@@ -196,7 +196,8 @@ class ContentGenerator:
         
         response = self.model_client.post(
             self.openrouter_config["base_url"],
-            json=payload
+            json=payload,
+            timeout=20  # 20秒タイムアウト
         )
         
         print(f"OpenRouter API応答: {response.status_code}")
@@ -253,29 +254,20 @@ class ContentGenerator:
     
     def generate_note_article(self, theme: str, style_info: Dict, target_length: Tuple[int, int]) -> str:
         """note記事を生成"""
-        style_context = self._create_style_context(style_info)
         
         prompt = f"""
-あなたは経験豊富なライターです。以下の条件に基づいて、note記事を作成してください。
+{theme}について800-1500文字のnote記事を書いてください。
 
-{style_context}
+要件:
+- フレンドリーで親しみやすいトーン
+- 実体験を含める
+- 読者との対話を意識
+- マークダウン形式
 
-【記事の構成】
-1. 導入：読者の悩みに共感する問題提起
-2. 本編：具体的な体験談や実例を交えて解説
-3. まとめ：前向きなメッセージで締めくくる
-
-【テーマ】
-{theme}
-
-【要件】
-- 文字数：{target_length[0]}〜{target_length[1]}文字
-- 読者が「やってみよう」と思える内容
-- 具体的な数字や結果を含める
-- 実体験に基づいたエピソード
-- 読者との対話を意識した表現
-
-マークダウン形式で記事を作成してください。
+記事構成:
+1. 問題提起
+2. 体験談・解決策
+3. まとめ
 """
         
         return self._call_api_with_retry(prompt)
