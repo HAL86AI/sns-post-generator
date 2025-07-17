@@ -90,16 +90,11 @@ class ContentGenerator:
             if not api_key:
                 raise ValueError("OPENROUTER_API_KEY環境変数が設定されていません")
             
-            # OpenRouter APIの設定（フォールバックモデル付き）
-            self.openrouter_models = [
-                "microsoft/phi-3-mini-128k-instruct:free",
-                "meta-llama/llama-3.1-8b-instruct:free", 
-                "qwen/qwen-2-7b-instruct:free"
-            ]
+            # OpenRouter APIの設定
             self.openrouter_config = {
                 "api_key": api_key,
                 "base_url": "https://openrouter.ai/api/v1/chat/completions",
-                "model": self.openrouter_models[0],  # 最初のモデルを使用
+                "model": "deepseek/deepseek-chat-v3-0324:free",  # DeepSeek V3
                 "headers": {
                     "Authorization": f"Bearer {api_key}",
                     "Content-Type": "application/json",
@@ -194,7 +189,7 @@ class ContentGenerator:
             "presence_penalty": 0
         }
         
-        print(f"OpenRouter API呼び出し: {self.openrouter_config['model']} (Microsoft Phi-3)")
+        print(f"OpenRouter API呼び出し: {self.openrouter_config['model']} (DeepSeek V3)")
         
         response = self.model_client.post(
             self.openrouter_config["base_url"],
