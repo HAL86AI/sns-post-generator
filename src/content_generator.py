@@ -15,8 +15,8 @@ class GenerationConfig:
     """コンテンツ生成の設定"""
     model_type: str
     temperature: float = 0.7
-    max_tokens: int = 1000  # トークン数を削減
-    retry_attempts: int = 2  # リトライ回数を削減
+    max_tokens: int = 500  # さらに軽量化
+    retry_attempts: int = 1  # リトライなし
     retry_delay: float = 1.0
 
 
@@ -94,7 +94,7 @@ class ContentGenerator:
             self.openrouter_config = {
                 "api_key": api_key,
                 "base_url": "https://openrouter.ai/api/v1/chat/completions",
-                "model": "deepseek/deepseek-chat-v3-0324:free",  # 無料モデル
+                "model": "huggingfaceh4/zephyr-7b-beta:free",  # 軽量で安定
                 "headers": {
                     "Authorization": f"Bearer {api_key}",
                     "Content-Type": "application/json",
@@ -125,12 +125,9 @@ class ContentGenerator:
                     raise ValueError(f"未サポートのモデルタイプ: {self.config.model_type}")
             
             except Exception as e:
-                if attempt == self.config.retry_attempts - 1:
-                    print(f"API呼び出しが失敗しました: {e}")
-                    return self._generate_with_template(prompt)
-                else:
-                    print(f"API呼び出し失敗 (試行 {attempt + 1}/{self.config.retry_attempts}): {e}")
-                    time.sleep(self.config.retry_delay)
+                print(f"API呼び出し失敗: {e}")
+                print("テンプレートモードにフォールバック")
+                return self._generate_with_template(prompt)
         
         return self._generate_with_template(prompt)
     
@@ -197,7 +194,7 @@ class ContentGenerator:
         response = self.model_client.post(
             self.openrouter_config["base_url"],
             json=payload,
-            timeout=20  # 20秒タイムアウト
+            timeout=10  # 10秒タイムアウト
         )
         
         print(f"OpenRouter API応答: {response.status_code}")
