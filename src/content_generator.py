@@ -194,7 +194,7 @@ class ContentGenerator:
         response = self.model_client.post(
             self.openrouter_config["base_url"],
             json=payload,
-            timeout=10  # 10秒タイムアウト
+            timeout=5  # 5秒タイムアウト
         )
         
         print(f"OpenRouter API応答: {response.status_code}")
@@ -271,58 +271,32 @@ class ContentGenerator:
     
     def generate_linkedin_post(self, theme: str, style_info: Dict, target_length: Tuple[int, int]) -> str:
         """LinkedIn投稿を生成"""
-        style_context = self._create_style_context(style_info)
         
         prompt = f"""
-あなたはビジネス経験豊富な専門家です。以下の条件に基づいて、LinkedIn投稿を作成してください。
+{theme}について300-600文字のLinkedIn投稿を書いてください。
 
-{style_context}
-
-【投稿の構成】
-1. 結論先出し：主要なメッセージ
-2. 根拠：体験談や具体例
-3. 行動提案：読者への提案
-
-【テーマ】
-{theme}
-
-【要件】
-- 文字数：{target_length[0]}〜{target_length[1]}文字
-- ビジネス関連の知見共有
-- 論理的で分かりやすい構成
-- 読者が行動を起こしたくなる内容
-- プロフェッショナルなトーン
-
-テキスト形式で投稿を作成してください。
+要件:
+- ビジネス向けのプロフェッショナルなトーン
+- 結論先出し
+- 実体験含む
+- 読者への行動提案
 """
         
         return self._call_api_with_retry(prompt)
     
     def generate_twitter_thread(self, theme: str, style_info: Dict, max_tweets: int = 3) -> List[str]:
         """Twitter投稿（スレッド）を生成"""
-        style_context = self._create_style_context(style_info)
         
         prompt = f"""
-あなたは影響力のあるTwitterユーザーです。以下の条件に基づいて、Twitterスレッドを作成してください。
+{theme}について3つのTwitter投稿を書いてください。
 
-{style_context}
+要件:
+- 各投稿140文字以内
+- 1/3: 気づき・ポイント
+- 2/3: 具体的内容
+- 3/3: まとめ・ハッシュタグ
 
-【スレッドの構成】
-1/3 【発見】気づきやポイント
-2/3 【詳細】具体的な内容や数値
-3/3 【まとめ】行動提案やハッシュタグ
-
-【テーマ】
-{theme}
-
-【要件】
-- 最大{max_tweets}ツイート
-- 各ツイート140文字以内
-- インパクトのある表現
-- エンゲージメントを促す内容
-- 適切なハッシュタグ
-
-各ツイートを番号付きで分けて作成してください。
+番号付きで分けて作成してください。
 """
         
         response = self._call_api_with_retry(prompt)
