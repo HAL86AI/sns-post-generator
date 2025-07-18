@@ -82,54 +82,23 @@ def generate_content():
             "workflow": sns_workflow_text
         }
         
-        # コンテンツ生成（一つずつ、エラー時はテンプレート使用）
-        generator = ContentGenerator(model_type=model_type)
+        # シンプルなテンプレートベース生成
+        generator = ContentGenerator(model_type="template")
         formatter = PlatformFormatter()
         
         generated_content = {}
         
-        # note記事生成
-        try:
-            note_content = generator.generate_note_article(
-                theme=theme,
-                style_info=combined_style,
-                target_length=(800, 1500)
-            )
-            generated_content['note'] = formatter.format_note_article(note_content)
-        except Exception as e:
-            print(f"Note生成エラー、テンプレート使用: {e}")
-            generated_content['note'] = formatter.format_note_article(generator._generate_note_template())
+        # note記事生成（テンプレート）
+        note_content = generator._generate_note_template()
+        generated_content['note'] = formatter.format_note_article(note_content)
         
-        # 少し待機してからLinkedIn投稿生成
-        import time
-        time.sleep(1)
+        # LinkedIn投稿生成（テンプレート）
+        linkedin_content = generator._generate_linkedin_template()
+        generated_content['linkedin'] = formatter.format_linkedin_post(linkedin_content)
         
-        # LinkedIn投稿生成
-        try:
-            linkedin_content = generator.generate_linkedin_post(
-                theme=theme,
-                style_info=combined_style,
-                target_length=(300, 600)
-            )
-            generated_content['linkedin'] = formatter.format_linkedin_post(linkedin_content)
-        except Exception as e:
-            print(f"LinkedIn生成エラー、テンプレート使用: {e}")
-            generated_content['linkedin'] = formatter.format_linkedin_post(generator._generate_linkedin_template())
-        
-        # 少し待機してからTwitter投稿生成
-        time.sleep(1)
-        
-        # Twitter投稿生成
-        try:
-            twitter_content = generator.generate_twitter_thread(
-                theme=theme,
-                style_info=combined_style,
-                max_tweets=3
-            )
-            generated_content['twitter'] = formatter.format_twitter_thread(twitter_content)
-        except Exception as e:
-            print(f"Twitter生成エラー、テンプレート使用: {e}")
-            generated_content['twitter'] = formatter.format_twitter_thread(generator._generate_twitter_template())
+        # Twitter投稿生成（テンプレート）
+        twitter_content = generator._generate_twitter_template()
+        generated_content['twitter'] = formatter.format_twitter_thread(twitter_content)
         
         # 文字数情報の追加
         content_stats = {

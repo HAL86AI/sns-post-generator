@@ -109,26 +109,8 @@ class ContentGenerator:
     
     def _call_api_with_retry(self, prompt: str) -> str:
         """APIを呼び出し、失敗時はリトライ"""
-        for attempt in range(self.config.retry_attempts):
-            try:
-                if self.config.model_type == "openrouter":
-                    return self._call_openrouter_api(prompt)
-                elif self.config.model_type == "claude":
-                    return self._call_claude_api(prompt)
-                elif self.config.model_type == "openai":
-                    return self._call_openai_api(prompt)
-                elif self.config.model_type == "local":
-                    return self._call_local_model(prompt)
-                elif self.config.model_type == "template":
-                    return self._generate_with_template(prompt)
-                else:
-                    raise ValueError(f"未サポートのモデルタイプ: {self.config.model_type}")
-            
-            except Exception as e:
-                print(f"API呼び出し失敗: {e}")
-                print("テンプレートモードにフォールバック")
-                return self._generate_with_template(prompt)
-        
+        # 一時的にOpenRouterを無効化してテンプレートモードを使用
+        print(f"テンプレートモード使用: {self.config.model_type}")
         return self._generate_with_template(prompt)
     
     def _call_claude_api(self, prompt: str) -> str:
