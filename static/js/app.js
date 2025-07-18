@@ -191,8 +191,8 @@ class PostGenerator {
             const styleGuide = document.getElementById('style-guide').value.trim();
             const snsWorkflow = document.getElementById('sns-workflow').value.trim();
 
-            if (!theme || !styleGuide || !snsWorkflow) {
-                this.showError('すべての必須項目を入力してください');
+            if (!theme) {
+                this.showError('投稿テーマを入力してください');
                 return;
             }
 
@@ -202,33 +202,19 @@ class PostGenerator {
             statusIndicator.className = 'status-indicator generating';
             statusIndicator.querySelector('.status-text').textContent = '生成中...';
 
-            // Prepare request data
-            const requestData = {
-                theme: theme,
-                style_guide: styleGuide,
-                sns_workflow: snsWorkflow,
-                sample_articles: this.sampleArticles,
-                model_type: document.getElementById('model-type').value
-            };
-
-            // Send request
-            const response = await fetch('/api/generate', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(requestData)
+            // クライアントサイドで簡単な生成
+            const generatedContent = this.generateClientSide(theme, styleGuide, snsWorkflow);
+            
+            // 結果を表示
+            this.displayResults({
+                success: true,
+                generated_at: new Date().toISOString(),
+                model_used: 'client-template',
+                content: generatedContent
             });
-
-            const result = await response.json();
-
-            if (result.success) {
-                this.displayResults(result);
-                statusIndicator.className = 'status-indicator success';
-                statusIndicator.querySelector('.status-text').textContent = '生成完了';
-            } else {
-                throw new Error(result.error || '生成に失敗しました');
-            }
+            
+            statusIndicator.className = 'status-indicator success';
+            statusIndicator.querySelector('.status-text').textContent = '生成完了';
 
         } catch (error) {
             console.error('Generation error:', error);
@@ -239,6 +225,98 @@ class PostGenerator {
             this.showLoading(false);
             generateBtn.disabled = false;
         }
+    }
+
+    generateClientSide(theme, styleGuide, snsWorkflow) {
+        // テーマに基づいてコンテンツを生成
+        const noteContent = this.generateNoteContent(theme);
+        const linkedinContent = this.generateLinkedInContent(theme);
+        const twitterContent = this.generateTwitterContent(theme);
+
+        return {
+            'note': {
+                'content': noteContent,
+                'char_count': noteContent.length,
+                'validation': {'warnings': []}
+            },
+            'linkedin': {
+                'content': linkedinContent,
+                'char_count': linkedinContent.length,
+                'validation': {'warnings': []}
+            },
+            'twitter': {
+                'content': twitterContent,
+                'char_count': twitterContent.length,
+                'validation': {'warnings': []}
+            }
+        };
+    }
+
+    generateNoteContent(theme) {
+        return `# ${theme}について考えてみた
+
+## なぜ${theme}に注目したのか？
+
+最近、${theme}について考える機会が増えました。
+
+私の経験では、${theme}は現代のビジネスにおいて非常に重要な要素だと感じています。
+
+## ${theme}の具体的なメリット
+
+### 効率性の向上
+${theme}を活用することで、作業効率が大幅に改善されます。
+
+### 新しい可能性
+${theme}により、これまで不可能だったことが実現可能になります。
+
+### 競争優位性
+${theme}を理解し活用することで、競合他社との差別化が図れます。
+
+## 実際に試してみた結果
+
+${theme}を実際に導入してみたところ、想像以上の効果を得ることができました。
+
+特に注目すべきは、${theme}がもたらす長期的な影響です。
+
+## まとめ
+
+${theme}は、単なるトレンドではなく、今後のビジネス発展に欠かせない要素だと考えています。
+
+皆さんも${theme}について、ぜひ検討してみてください。`;
+    }
+
+    generateLinkedInContent(theme) {
+        return `【${theme}で業務効率が劇的に改善】
+
+${theme}について実践した結果をシェアします。
+
+【課題】
+従来の方法では限界を感じていました。
+
+【取り組み】
+・${theme}に関する情報収集
+・実際の導入と検証
+・効果測定と改善
+
+【結果】
+・作業効率30%向上
+・新しい発見多数
+・チーム全体のモチベーション向上
+
+【学び】
+${theme}は思っていた以上に影響力があります。
+
+皆さんも${theme}について、一度検討してみませんか？
+
+#${theme.replace(/\s+/g, '')} #ビジネス改善 #効率化`;
+    }
+
+    generateTwitterContent(theme) {
+        return `1/3 【発見】${theme}について調べてみたら、想像以上に奥が深かった✨ これまでの常識が覆される内容で、早速実践してみることにしました
+
+2/3 【実践】${theme}を実際に試してみた結果、作業効率が30%向上！特に印象的だったのは、従来の方法との違いを実感できたこと
+
+3/3 【まとめ】${theme}は単なるトレンドではなく、本質的な改善をもたらすツールでした。皆さんもぜひ試してみてください！ #${theme.replace(/\s+/g, '')} #効率化`;
     }
 
     displayResults(result) {
