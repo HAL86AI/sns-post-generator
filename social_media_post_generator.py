@@ -43,15 +43,26 @@ class SocialMediaPostGenerator:
         """GitHubからファイル一覧を取得"""
         try:
             url = f"{self.base_github_url}/{path}"
+            
+            # GitHub認証ヘッダー（オプション）
+            headers = {}
+            if hasattr(st, 'secrets') and 'GITHUB_TOKEN' in st.secrets:
+                headers['Authorization'] = f"token {st.secrets['GITHUB_TOKEN']}"
+            elif 'github_token' in st.session_state:
+                headers['Authorization'] = f"token {st.session_state['github_token']}"
+            
             st.info(f"デバッグ: アクセス中 - {url}")
-            response = requests.get(url)
+            response = requests.get(url, headers=headers)
             st.info(f"デバッグ: レスポンスステータス - {response.status_code}")
+            
             if response.status_code == 200:
                 files = response.json()
                 st.info(f"デバッグ: 取得ファイル数 - {len(files)}")
                 return files
             else:
-                st.error(f"GitHub APIエラー: {response.status_code} - {response.text}")
+                st.error(f"GitHub APIエラー: {response.status_code}")
+                if response.status_code == 403:
+                    st.warning("💡 GitHub APIレート制限に達しています。GitHubトークンを設定すると制限が緩和されます。")
             return []
         except Exception as e:
             st.error(f"GitHub API エラー: {str(e)}")
@@ -346,15 +357,30 @@ def main():
     
     # APIキー設定エリア
     if not (hasattr(st, 'secrets') and 'OPENROUTER_API_KEY' in st.secrets):
-        with st.expander("🔑 OpenRouter APIキー設定（記事生成機能用）"):
-            api_key_input = st.text_input(
-                "OpenRouter APIキーを入力してください", 
-                type="password",
-                help="https://openrouter.ai でAPIキーを取得してください"
-            )
-            if api_key_input:
-                st.session_state['openrouter_api_key'] = api_key_input
-                st.success("✅ APIキーが設定されました！")
+        with st.expander("🔑 APIキー設定"):
+            col1, col2 = st.columns([1, 1])
+            
+            with col1:
+                st.subheader("OpenRouter APIキー（記事生成用）")
+                api_key_input = st.text_input(
+                    "OpenRouter APIキーを入力してください", 
+                    type="password",
+                    help="https://openrouter.ai でAPIキーを取得してください"
+                )
+                if api_key_input:
+                    st.session_state['openrouter_api_key'] = api_key_input
+                    st.success("✅ OpenRouter APIキーが設定されました！")
+            
+            with col2:
+                st.subheader("GitHubトークン（レート制限回避用）")
+                github_token_input = st.text_input(
+                    "GitHubトークンを入力してください（オプション）",
+                    type="password", 
+                    help="GitHub APIレート制限を回避するため。github.com → Settings → Developer settings → Personal access tokens"
+                )
+                if github_token_input:
+                    st.session_state['github_token'] = github_token_input
+                    st.success("✅ GitHubトークンが設定されました！")
     
     # データソース選択
     st.sidebar.header("📂 データソース")
