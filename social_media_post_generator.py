@@ -6,6 +6,11 @@ import hashlib
 import json
 import requests
 from io import StringIO
+try:
+    from openai import OpenAI
+    OPENAI_AVAILABLE = True
+except ImportError:
+    OPENAI_AVAILABLE = False
 
 class SocialMediaPostGenerator:
     def __init__(self, writing_folder_path=None):
@@ -214,6 +219,107 @@ class SocialMediaPostGenerator:
         return note_post
 
 
+class AIArticleGenerator:
+    def __init__(self):
+        self.available_models = self.get_available_models()
+        self.client = None
+        self.init_openrouter()
+    
+    def init_openrouter(self):
+        """OpenRouterクライアントを初期化"""
+        if not OPENAI_AVAILABLE:
+            return
+        
+        # Streamlit SecretsまたはAPI Key入力から取得
+        api_key = None
+        if hasattr(st, 'secrets') and 'OPENROUTER_API_KEY' in st.secrets:
+            api_key = st.secrets['OPENROUTER_API_KEY']
+        elif 'openrouter_api_key' in st.session_state:
+            api_key = st.session_state['openrouter_api_key']
+            
+        if api_key:
+            self.client = OpenAI(
+                base_url="https://openrouter.ai/api/v1",
+                api_key=api_key,
+            )
+    
+    def get_available_models(self):
+        """利用可能なOpenRouterモデルを取得"""
+        return [
+            "deepseek/deepseek-r1-0528:free",
+            "anthropic/claude-3.5-sonnet",
+            "openai/gpt-4o",
+            "google/gemini-pro",
+            "meta-llama/llama-3.1-70b-instruct",
+            "mistralai/mistral-large",
+            "anthropic/claude-3-haiku",
+            "openai/gpt-3.5-turbo"
+        ]
+    
+    def generate_article(self, topic, model='deepseek/deepseek-r1-0528:free', article_type='blog', target_length=1000):
+        """AIを使って記事を生成"""
+        if not self.client:
+            return "❌ OpenRouter APIキーが設定されていません。"
+        
+        # プロンプトテンプレート
+        prompts = {
+            'blog': f"""
+あなたは経験豊富なブログライターです。以下のトピックについて、読みやすく魅力的なブログ記事を{target_length}文字程度で書いてください。
+
+トピック: {topic}
+
+記事の構成:
+1. 魅力的な導入文
+2. 主要なポイント（3-5個）
+3. 具体例や体験談
+4. まとめと読者へのメッセージ
+
+読者に価値を提供し、最後まで読みたくなるような記事をお願いします。日本語で回答してください。
+""",
+            'note': f"""
+あなたはnote記事のライターです。以下のトピックについて、noteの読者に響く記事を{target_length}文字程度で書いてください。
+
+トピック: {topic}
+
+記事の特徴:
+- 個人的な体験や気づきを含める
+- 親しみやすい文体で書く
+- 読者との距離感を大切にする
+- 実用的な情報を提供する
+
+noteらしい温かみのある記事をお願いします。日本語で回答してください。
+""",
+            'business': f"""
+あなたはビジネス記事の専門ライターです。以下のトピックについて、ビジネスパーソン向けの記事を{target_length}文字程度で書いてください。
+
+トピック: {topic}
+
+記事の要求:
+- 論理的で説得力のある構成
+- データや事例を活用
+- 実践的なアドバイス
+- プロフェッショナルなトーン
+
+読者の課題解決に役立つ記事をお願いします。日本語で回答してください。
+"""
+        }
+        
+        prompt = prompts.get(article_type, prompts['blog'])
+        
+        try:
+            response = self.client.chat.completions.create(
+                model=model,
+                messages=[
+                    {"role": "user", "content": prompt}
+                ],
+                max_tokens=3000,
+                temperature=0.7
+            )
+            return response.choices[0].message.content
+        except Exception as e:
+            return f"❌ 記事生成エラー: {str(e)}"
+
+
 def main():
     st.set_page_config(
         page_title="SNS投稿ジェネレーター",
@@ -223,6 +329,18 @@ def main():
     
     st.title("🚀 SNS投稿ジェネレーター")
     st.markdown("📱 どのデバイスからでもアクセス可能なクラウド版SNS投稿生成ツール")
+    
+    # APIキー設定エリア
+    if not (hasattr(st, 'secrets') and 'OPENROUTER_API_KEY' in st.secrets):
+        with st.expander("🔑 OpenRouter APIキー設定（記事生成機能用）"):
+            api_key_input = st.text_input(
+                "OpenRouter APIキーを入力してください", 
+                type="password",
+                help="https://openrouter.ai でAPIキーを取得してください"
+            )
+            if api_key_input:
+                st.session_state['openrouter_api_key'] = api_key_input
+                st.success("✅ APIキーが設定されました！")
     
     # データソース選択
     st.sidebar.header("📂 データソース")
