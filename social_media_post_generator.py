@@ -43,9 +43,15 @@ class SocialMediaPostGenerator:
         """GitHubからファイル一覧を取得"""
         try:
             url = f"{self.base_github_url}/{path}"
+            st.info(f"デバッグ: アクセス中 - {url}")
             response = requests.get(url)
+            st.info(f"デバッグ: レスポンスステータス - {response.status_code}")
             if response.status_code == 200:
-                return response.json()
+                files = response.json()
+                st.info(f"デバッグ: 取得ファイル数 - {len(files)}")
+                return files
+            else:
+                st.error(f"GitHub APIエラー: {response.status_code} - {response.text}")
             return []
         except Exception as e:
             st.error(f"GitHub API エラー: {str(e)}")
@@ -79,8 +85,10 @@ class SocialMediaPostGenerator:
         """GitHubから再帰的に.mdファイルを取得"""
         md_files = []
         files = self.get_github_files(path)
+        st.info(f"デバッグ: パス '{path}' で {len(files)} 個のアイテムを発見")
         
         for file in files:
+            st.info(f"デバッグ: ファイル - {file.get('name', 'Unknown')} (タイプ: {file.get('type', 'Unknown')})")
             if file['type'] == 'file' and file['name'].endswith('.md'):
                 relative_path = file['path']
                 category = '/'.join(relative_path.split('/')[:-1]) if '/' in relative_path else ''
@@ -91,9 +99,12 @@ class SocialMediaPostGenerator:
                     'category': category,
                     'source': 'github'
                 })
+                st.info(f"デバッグ: .mdファイル追加 - {file['name']}")
             elif file['type'] == 'dir':
+                st.info(f"デバッグ: フォルダを再帰検索 - {file['name']}")
                 md_files.extend(self._get_github_md_files_recursive(file['path']))
         
+        st.info(f"デバッグ: パス '{path}' で合計 {len(md_files)} 個の.mdファイル発見")
         return md_files
 
     def read_file_content(self, file_path, source='local'):
@@ -375,6 +386,9 @@ def main():
         st.sidebar.header("📂 ファイル選択")
         try:
             md_files = generator.get_all_md_files()
+            st.info(f"デバッグ: 見つかったファイル数 = {len(md_files)}")
+            if md_files:
+                st.info(f"最初のファイル: {md_files[0]}")
         except Exception as e:
             st.error(f"ファイル読み込みエラー: {str(e)}")
             md_files = []
