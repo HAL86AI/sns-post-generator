@@ -321,11 +321,14 @@ noteらしい温かみのある記事をお願いします。日本語で回答�
 
 
 def main():
-    st.set_page_config(
-        page_title="SNS投稿ジェネレーター",
-        page_icon="📱",
-        layout="wide"
-    )
+    try:
+        st.set_page_config(
+            page_title="SNS投稿ジェネレーター",
+            page_icon="📱",
+            layout="wide"
+        )
+    except Exception as e:
+        st.error(f"ページ設定エラー: {str(e)}")
     
     st.title("🚀 SNS投稿ジェネレーター")
     st.markdown("📱 どのデバイスからでもアクセス可能なクラウド版SNS投稿生成ツール")
