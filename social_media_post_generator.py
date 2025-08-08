@@ -361,93 +361,183 @@ def main():
     else:
         generator = SocialMediaPostGenerator()  # GitHubモード
     
-    # サイドバー：ファイル選択
-    st.sidebar.header("📂 ファイル選択")
-    md_files = generator.get_all_md_files()
+    # AI記事ジェネレーター初期化
+    ai_generator = AIArticleGenerator()
     
-    if not md_files:
-        st.error("Markdownファイルが見つかりません")
-        return
+    # メインタブ選択
+    tab1, tab2 = st.tabs(["📱 SNS投稿生成", "🤖 AI記事作成"])
     
-    # カテゴリでグループ化
-    categories = {}
-    for file in md_files:
-        category = file['category']
-        if category not in categories:
-            categories[category] = []
-        categories[category].append(file)
-    
-    # カテゴリ選択
-    selected_category = st.sidebar.selectbox(
-        "カテゴリを選択",
-        options=list(categories.keys())
-    )
-    
-    # ファイル選択
-    category_files = categories[selected_category]
-    file_titles = [f['title'] for f in category_files]
-    
-    selected_file_title = st.sidebar.selectbox(
-        "ファイルを選択",
-        options=file_titles
-    )
-    
-    # 選択されたファイル情報取得
-    selected_file = next(f for f in category_files if f['title'] == selected_file_title)
-    
-    # プラットフォーム選択
-    st.sidebar.header("📱 プラットフォーム選択")
-    selected_platforms = st.sidebar.multiselect(
-        "投稿を作成するプラットフォームを選択",
-        options=['Twitter', 'LinkedIn', 'note'],
-        default=['Twitter', 'LinkedIn', 'note']
-    )
-    
-    # メインエリア
-    col1, col2 = st.columns([1, 1])
-    
-    with col1:
-        st.header("📄 元コンテンツ")
+    with tab1:
+        # サイドバー：ファイル選択
+        st.sidebar.header("📂 ファイル選択")
+        md_files = generator.get_all_md_files()
         
-        # ファイル情報表示
-        st.info(f"**ファイル**: {selected_file['title']}\n**パス**: {selected_file['relative_path']}")
+        if not md_files:
+            st.error("Markdownファイルが見つかりません")
+            return
         
-        # ファイル内容読み取り
-        content = generator.read_file_content(selected_file['path'], selected_file.get('source', 'local'))
+        # カテゴリでグループ化
+        categories = {}
+        for file in md_files:
+            category = file['category']
+            if category not in categories:
+                categories[category] = []
+            categories[category].append(file)
         
-        # 内容をプレビュー表示（最初の500文字）
-        st.text_area(
-            "コンテンツプレビュー",
-            value=content[:500] + "..." if len(content) > 500 else content,
-            height=300,
-            disabled=True
+        # カテゴリ選択
+        selected_category = st.sidebar.selectbox(
+            "カテゴリを選択",
+            options=list(categories.keys())
+        )
+        
+        # ファイル選択
+        category_files = categories[selected_category]
+        file_titles = [f['title'] for f in category_files]
+        
+        selected_file_title = st.sidebar.selectbox(
+            "ファイルを選択",
+            options=file_titles
+        )
+        
+        # 選択されたファイル情報取得
+        selected_file = next(f for f in category_files if f['title'] == selected_file_title)
+        
+        # プラットフォーム選択
+        st.sidebar.header("📱 プラットフォーム選択")
+        selected_platforms = st.sidebar.multiselect(
+            "投稿を作成するプラットフォームを選択",
+            options=['Twitter', 'LinkedIn', 'note'],
+            default=['Twitter', 'LinkedIn', 'note']
         )
     
-    with col2:
-        st.header("📱 生成された投稿")
+        # メインエリア
+        col1, col2 = st.columns([1, 1])
         
-        for platform in selected_platforms:
-            st.subheader(f"{platform} 投稿")
+        with col1:
+            st.header("📄 元コンテンツ")
             
-            # プラットフォーム別投稿生成
-            if platform == 'Twitter':
-                post_content = generator.create_twitter_post(content, selected_file['title'])
-            elif platform == 'LinkedIn':
-                post_content = generator.create_linkedin_post(content, selected_file['title'])
-            elif platform == 'note':
-                post_content = generator.create_note_intro(content, selected_file['title'])
+            # ファイル情報表示
+            st.info(f"**ファイル**: {selected_file['title']}\n**パス**: {selected_file['relative_path']}")
             
-            # 投稿内容表示
+            # ファイル内容読み取り
+            content = generator.read_file_content(selected_file['path'], selected_file.get('source', 'local'))
+            
+            # 内容をプレビュー表示（最初の500文字）
             st.text_area(
-                f"{platform}用投稿 ({len(post_content)}文字)",
-                value=post_content,
-                height=150,
-                key=f"{platform}_{selected_file['title']}"
+                "コンテンツプレビュー",
+                value=content[:500] + "..." if len(content) > 500 else content,
+                height=300,
+                disabled=True
+            )
+        
+        with col2:
+            st.header("📱 生成された投稿")
+            
+            for platform in selected_platforms:
+                st.subheader(f"{platform} 投稿")
+                
+                # プラットフォーム別投稿生成
+                if platform == 'Twitter':
+                    post_content = generator.create_twitter_post(content, selected_file['title'])
+                elif platform == 'LinkedIn':
+                    post_content = generator.create_linkedin_post(content, selected_file['title'])
+                elif platform == 'note':
+                    post_content = generator.create_note_intro(content, selected_file['title'])
+                
+                # 投稿内容表示
+                st.text_area(
+                    f"{platform}用投稿 ({len(post_content)}文字)",
+                    value=post_content,
+                    height=150,
+                    key=f"{platform}_{selected_file['title']}"
+                )
+                
+                # コピーボタン
+                if st.button(f"{platform}投稿をクリップボードにコピー", key=f"copy_{platform}_{selected_file['title']}"):
+                    st.success(f"{platform}投稿をクリップボードにコピーしました！")
+    
+    with tab2:
+        st.header("🤖 AI記事作成")
+        
+        col1, col2 = st.columns([1, 1])
+        
+        with col1:
+            st.subheader("記事生成設定")
+            
+            # トピック入力
+            topic = st.text_input(
+                "記事のトピック・テーマを入力してください",
+                placeholder="例: AI活用で業務効率化を実現する5つの方法"
             )
             
-            # コピーボタン
-            if st.button(f"{platform}投稿をクリップボードにコピー", key=f"copy_{platform}_{selected_file['title']}"):
-                st.success(f"{platform}投稿をクリップボードにコピーしました！")
+            # 記事タイプ選択
+            article_type = st.selectbox(
+                "記事のタイプ",
+                options=['blog', 'note', 'business'],
+                format_func=lambda x: {
+                    'blog': '📝 ブログ記事（一般的なブログスタイル）',
+                    'note': '📙 note記事（親しみやすいスタイル）', 
+                    'business': '💼 ビジネス記事（プロフェッショナルスタイル）'
+                }[x]
+            )
+            
+            # AIモデル選択
+            selected_model = st.selectbox(
+                "AIモデルを選択",
+                options=ai_generator.available_models,
+                index=0  # DeepSeek R1をデフォルト
+            )
+            
+            # 文字数設定
+            target_length = st.slider(
+                "目標文字数",
+                min_value=500,
+                max_value=3000,
+                value=1500,
+                step=100
+            )
+            
+            # 記事生成ボタン
+            if st.button("🚀 記事を生成", type="primary"):
+                if not topic:
+                    st.error("トピックを入力してください")
+                else:
+                    with st.spinner("AI記事を生成中..."):
+                        generated_article = ai_generator.generate_article(
+                            topic=topic,
+                            model=selected_model,
+                            article_type=article_type,
+                            target_length=target_length
+                        )
+                        st.session_state['generated_article'] = generated_article
+                        st.session_state['article_topic'] = topic
+        
+        with col2:
+            st.subheader("生成された記事")
+            
+            if 'generated_article' in st.session_state:
+                # 記事内容表示
+                article_content = st.text_area(
+                    f"記事内容 ({len(st.session_state['generated_article'])}文字)",
+                    value=st.session_state['generated_article'],
+                    height=400,
+                    key="article_editor"
+                )
+                
+                # 保存・コピーボタン
+                col2_1, col2_2 = st.columns([1, 1])
+                
+                with col2_1:
+                    if st.button("📋 記事をコピー"):
+                        st.success("✅ 記事をクリップボードにコピーしました！")
+                
+                with col2_2:
+                    if st.button("💾 記事を保存"):
+                        # GitHubに保存する機能（今後実装）
+                        st.info("💡 記事保存機能は今後実装予定です")
+            
+            else:
+                st.info("👈 左側で設定を行い、「記事を生成」ボタンをクリックしてください")
     
     # フッター情報
     st.markdown("---")
