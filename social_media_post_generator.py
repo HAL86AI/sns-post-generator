@@ -370,37 +370,46 @@ def main():
     with tab1:
         # サイドバー：ファイル選択
         st.sidebar.header("📂 ファイル選択")
-        md_files = generator.get_all_md_files()
+        try:
+            md_files = generator.get_all_md_files()
+        except Exception as e:
+            st.error(f"ファイル読み込みエラー: {str(e)}")
+            md_files = []
         
         if not md_files:
             st.error("Markdownファイルが見つかりません")
+            st.info("GitHubリポジトリが正しく設定されているか確認してください。")
             return
         
         # カテゴリでグループ化
         categories = {}
         for file in md_files:
-            category = file['category']
+            category = file.get('category', 'その他')
             if category not in categories:
                 categories[category] = []
             categories[category].append(file)
         
         # カテゴリ選択
-        selected_category = st.sidebar.selectbox(
-            "カテゴリを選択",
-            options=list(categories.keys())
-        )
-        
-        # ファイル選択
-        category_files = categories[selected_category]
-        file_titles = [f['title'] for f in category_files]
-        
-        selected_file_title = st.sidebar.selectbox(
-            "ファイルを選択",
-            options=file_titles
-        )
-        
-        # 選択されたファイル情報取得
-        selected_file = next(f for f in category_files if f['title'] == selected_file_title)
+        if categories:
+            selected_category = st.sidebar.selectbox(
+                "カテゴリを選択",
+                options=list(categories.keys())
+            )
+            
+            # ファイル選択
+            category_files = categories[selected_category]
+            file_titles = [f['title'] for f in category_files]
+            
+            selected_file_title = st.sidebar.selectbox(
+                "ファイルを選択",
+                options=file_titles
+            )
+            
+            # 選択されたファイル情報取得
+            selected_file = next(f for f in category_files if f['title'] == selected_file_title)
+        else:
+            st.error("利用可能なファイルがありません")
+            return
         
         # プラットフォーム選択
         st.sidebar.header("📱 プラットフォーム選択")
