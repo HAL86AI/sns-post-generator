@@ -10,7 +10,7 @@ from io import StringIO
 class SocialMediaPostGenerator:
     def __init__(self, writing_folder_path=None):
         self.writing_folder = Path(writing_folder_path) if writing_folder_path else None
-        self.github_repo = "kaiga-arch/vibe-cording-writing"  # GitHubリポジトリ
+        self.github_repo = "HAL86AI/sns-post-generator"  # GitHubリポジトリ
         self.github_branch = "main"
         self.base_github_url = f"https://api.github.com/repos/{self.github_repo}/contents"
         self.platform_configs = {
