@@ -51,23 +51,32 @@ class SocialMediaPostGenerator:
             elif 'github_token' in st.session_state:
                 headers['Authorization'] = f"token {st.session_state['github_token']}"
             
-            st.info(f"デバッグ: アクセス中 - {url}")
             response = requests.get(url, headers=headers)
-            st.info(f"デバッグ: レスポンスステータス - {response.status_code}")
             
             if response.status_code == 200:
                 files = response.json()
-                st.info(f"デバッグ: 取得ファイル数 - {len(files)}")
                 return files
             else:
-                st.error(f"GitHub APIエラー: {response.status_code}")
                 if response.status_code == 403:
                     st.warning("💡 GitHub APIレート制限に達しています。GitHubトークンを設定すると制限が緩和されます。")
+                else:
+                    st.error(f"GitHub APIエラー: {response.status_code}")
             return []
         except Exception as e:
             st.error(f"GitHub API エラー: {str(e)}")
             return []
 
+    def get_static_md_files(self):
+        """静的なファイルリスト（レート制限回避）"""
+        return [
+            {'title': 'haruka', 'path': f'https://raw.githubusercontent.com/{self.github_repo}/main/vibe-cording-writing/haruka.md', 'category': 'メイン', 'source': 'github'},
+            {'title': 'note0630', 'path': f'https://raw.githubusercontent.com/{self.github_repo}/main/vibe-cording-writing/note0630.md', 'category': 'メイン', 'source': 'github'},
+            {'title': '001_最初のアイデア', 'path': f'https://raw.githubusercontent.com/{self.github_repo}/main/vibe-cording-writing/私の仕事のまんなかシリーズ/001_最初のアイデア.md', 'category': '仕事のまんなか', 'source': 'github'},
+            {'title': 'Gemini vs ChatGPT｜SNS運用・記事作成に最', 'path': f'https://raw.githubusercontent.com/{self.github_repo}/main/vibe-cording-writing/note/konomi_md_files/01_Gemini%20vs%20ChatGPT｜SNS運用・記事作成に最.md', 'category': 'konomi記事', 'source': 'github'},
+            {'title': 'SNS×AIで"ゼロから収益化"までの完全ロードマ', 'path': f'https://raw.githubusercontent.com/{self.github_repo}/main/vibe-cording-writing/note/konomi_md_files/02_【保存版】SNS×AIで"ゼロから収益化"までの完全ロードマ.md', 'category': 'konomi記事', 'source': 'github'},
+            {'title': 'AI活用で業務効率化', 'path': f'https://raw.githubusercontent.com/{self.github_repo}/main/vibe-cording-writing/note/company_up/2025年最新_AI活用で実現する業務効率化の成功事例と実践ポイント.md', 'category': '企業向け', 'source': 'github'},
+        ]
+    
     def get_all_md_files(self):
         """GitHubまたはローカルフォルダからすべての.mdファイルを取得"""
         md_files = []
@@ -87,8 +96,8 @@ class SocialMediaPostGenerator:
                             'source': 'local'
                         })
         else:
-            # GitHubから取得
-            md_files = self._get_github_md_files_recursive("")
+            # 静的リストを使用（レート制限回避）
+            md_files = self.get_static_md_files()
         
         return md_files
     
@@ -96,10 +105,8 @@ class SocialMediaPostGenerator:
         """GitHubから再帰的に.mdファイルを取得"""
         md_files = []
         files = self.get_github_files(path)
-        st.info(f"デバッグ: パス '{path}' で {len(files)} 個のアイテムを発見")
         
         for file in files:
-            st.info(f"デバッグ: ファイル - {file.get('name', 'Unknown')} (タイプ: {file.get('type', 'Unknown')})")
             if file['type'] == 'file' and file['name'].endswith('.md'):
                 relative_path = file['path']
                 category = '/'.join(relative_path.split('/')[:-1]) if '/' in relative_path else ''
@@ -110,12 +117,9 @@ class SocialMediaPostGenerator:
                     'category': category,
                     'source': 'github'
                 })
-                st.info(f"デバッグ: .mdファイル追加 - {file['name']}")
             elif file['type'] == 'dir':
-                st.info(f"デバッグ: フォルダを再帰検索 - {file['name']}")
                 md_files.extend(self._get_github_md_files_recursive(file['path']))
         
-        st.info(f"デバッグ: パス '{path}' で合計 {len(md_files)} 個の.mdファイル発見")
         return md_files
 
     def read_file_content(self, file_path, source='local'):
@@ -412,9 +416,6 @@ def main():
         st.sidebar.header("📂 ファイル選択")
         try:
             md_files = generator.get_all_md_files()
-            st.info(f"デバッグ: 見つかったファイル数 = {len(md_files)}")
-            if md_files:
-                st.info(f"最初のファイル: {md_files[0]}")
         except Exception as e:
             st.error(f"ファイル読み込みエラー: {str(e)}")
             md_files = []
