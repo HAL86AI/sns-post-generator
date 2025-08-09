@@ -69,12 +69,48 @@ class SocialMediaPostGenerator:
     def get_static_md_files(self):
         """静的なファイルリスト（レート制限回避）"""
         return [
-            {'title': 'haruka', 'path': f'https://raw.githubusercontent.com/{self.github_repo}/main/vibe-cording-writing/haruka.md', 'category': 'メイン', 'source': 'github'},
-            {'title': 'note0630', 'path': f'https://raw.githubusercontent.com/{self.github_repo}/main/vibe-cording-writing/note0630.md', 'category': 'メイン', 'source': 'github'},
-            {'title': '001_最初のアイデア', 'path': f'https://raw.githubusercontent.com/{self.github_repo}/main/vibe-cording-writing/私の仕事のまんなかシリーズ/001_最初のアイデア.md', 'category': '仕事のまんなか', 'source': 'github'},
-            {'title': 'Gemini vs ChatGPT｜SNS運用・記事作成に最', 'path': f'https://raw.githubusercontent.com/{self.github_repo}/main/vibe-cording-writing/note/konomi_md_files/01_Gemini%20vs%20ChatGPT｜SNS運用・記事作成に最.md', 'category': 'konomi記事', 'source': 'github'},
-            {'title': 'SNS×AIで"ゼロから収益化"までの完全ロードマ', 'path': f'https://raw.githubusercontent.com/{self.github_repo}/main/vibe-cording-writing/note/konomi_md_files/02_【保存版】SNS×AIで"ゼロから収益化"までの完全ロードマ.md', 'category': 'konomi記事', 'source': 'github'},
-            {'title': 'AI活用で業務効率化', 'path': f'https://raw.githubusercontent.com/{self.github_repo}/main/vibe-cording-writing/note/company_up/2025年最新_AI活用で実現する業務効率化の成功事例と実践ポイント.md', 'category': '企業向け', 'source': 'github'},
+            {
+                'title': 'haruka', 
+                'path': f'https://raw.githubusercontent.com/{self.github_repo}/main/vibe-cording-writing/haruka.md', 
+                'relative_path': 'vibe-cording-writing/haruka.md',
+                'category': 'メイン', 
+                'source': 'github'
+            },
+            {
+                'title': 'note0630', 
+                'path': f'https://raw.githubusercontent.com/{self.github_repo}/main/vibe-cording-writing/note0630.md', 
+                'relative_path': 'vibe-cording-writing/note0630.md',
+                'category': 'メイン', 
+                'source': 'github'
+            },
+            {
+                'title': '001_最初のアイデア', 
+                'path': f'https://raw.githubusercontent.com/{self.github_repo}/main/vibe-cording-writing/私の仕事のまんなかシリーズ/001_最初のアイデア.md', 
+                'relative_path': 'vibe-cording-writing/私の仕事のまんなかシリーズ/001_最初のアイデア.md',
+                'category': '仕事のまんなか', 
+                'source': 'github'
+            },
+            {
+                'title': 'Gemini vs ChatGPT｜SNS運用・記事作成に最', 
+                'path': f'https://raw.githubusercontent.com/{self.github_repo}/main/vibe-cording-writing/note/konomi_md_files/01_Gemini%20vs%20ChatGPT｜SNS運用・記事作成に最.md', 
+                'relative_path': 'vibe-cording-writing/note/konomi_md_files/01_Gemini vs ChatGPT｜SNS運用・記事作成に最.md',
+                'category': 'konomi記事', 
+                'source': 'github'
+            },
+            {
+                'title': 'SNS×AIで"ゼロから収益化"までの完全ロードマ', 
+                'path': f'https://raw.githubusercontent.com/{self.github_repo}/main/vibe-cording-writing/note/konomi_md_files/02_【保存版】SNS×AIで"ゼロから収益化"までの完全ロードマ.md', 
+                'relative_path': 'vibe-cording-writing/note/konomi_md_files/02_【保存版】SNS×AIで"ゼロから収益化"までの完全ロードマ.md',
+                'category': 'konomi記事', 
+                'source': 'github'
+            },
+            {
+                'title': 'AI活用で業務効率化', 
+                'path': f'https://raw.githubusercontent.com/{self.github_repo}/main/vibe-cording-writing/note/company_up/2025年最新_AI活用で実現する業務効率化の成功事例と実践ポイント.md', 
+                'relative_path': 'vibe-cording-writing/note/company_up/2025年最新_AI活用で実現する業務効率化の成功事例と実践ポイント.md',
+                'category': '企業向け', 
+                'source': 'github'
+            },
         ]
     
     def get_all_md_files(self):
@@ -470,7 +506,7 @@ def main():
             st.header("📄 元コンテンツ")
             
             # ファイル情報表示
-            st.info(f"**ファイル**: {selected_file['title']}\n**パス**: {selected_file['relative_path']}")
+            st.info(f"**ファイル**: {selected_file['title']}\n**パス**: {selected_file.get('relative_path', selected_file['path'])}")
             
             # ファイル内容読み取り
             content = generator.read_file_content(selected_file['path'], selected_file.get('source', 'local'))
